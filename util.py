@@ -22,7 +22,7 @@ function getAst(code){
         }
     }
 }
-""") # 获取代码编译完成后的对象
+""") # Lấy đối tượng sau khi quá trình biên dịch mã hoàn tất
 
 
 def VLR(a):

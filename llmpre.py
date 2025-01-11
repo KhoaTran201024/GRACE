@@ -1,4 +1,4 @@
-import openai
+# import openai
 import pandas as pd
 from tqdm import tqdm
 import os
@@ -6,8 +6,22 @@ import json
 import csv
 import logging
 
-openai.api_base = ""
-openai.api_key = ""
+import textwrap
+import google.generativeai as genai
+from IPython.display import display
+from IPython.display import Markdown
+
+# openai.api_base = ""
+# openai.api_key = ""
+
+GOOGLE_API_KEY = 'AIzaSyBnOY7XCnDRm98cdnEj6inozsLLYPHiAkQ'
+genai.configure(api_key=GOOGLE_API_KEY)
+
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+def to_markdown(text):
+  text = text.replace('•', '  *')
+  return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
 
 templates = {
     1: 'In the above code snippet, check for potential security vulnerabilities and output either \'Vulnerable\' or \'Non-vulnerable\'. '
@@ -29,7 +43,7 @@ logger.addHandler(fh)
 
 
 def main():
-    with open('F:/pycharmfile/vulllm/devign_data/devign_test_processed.json', 'r') as f:
+    with open('C:/Users/khoiv/Downloads/function.json', 'r') as f:
         data = json.load(f)
 
     def calculate_metrics(predictions, ground_truth):
@@ -56,26 +70,33 @@ def main():
 
     prediction_ls = []
     ground_truth = []
-
+    
     for row in data[0:2000]:
         if 'func' in row:
             inputCode = row['func'][:4000]
-        if 'node' in row:
-            inputnode = row['node'][:2000]
-        if 'edge' in row:
-            inputedge = row['edge'][:2000]
-        if 'func' in row:
-            inputex = row['example'][:4000]
+        # if 'node' in row:
+        #     inputnode = row['node'][:2000]
+        #     print('cp4')
+        # if 'edge' in row:
+        #     inputedge = row['edge'][:2000]
+        # if 'example' in row:
+        #     inputex = row['example'][:4000]
 
 
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "user", "content": format(inputCode)+templates[1]+templates[2]+format(inputnode)+templates[3]+format(inputedge)+templates[4]+format(inputex)}
-                ]
-            )
-            prediction = response['choices'][0]['message']['content']
+            # response = openai.ChatCompletion.create(
+            #     model="gpt-4",
+            #     messages=[
+            #         {"role": "user", "content": format(inputCode)+templates[1]+templates[2]+format(inputnode)+templates[3]+format(inputedge)+templates[4]+format(inputex)}
+            #     ]
+            # )
+            # prediction = response['choices'][0]['message']['content']
+            # print(prediction)
+            
+            response = model.generate_content(format(inputCode)+templates[1])
+            to_markdown(response.text)
+            prediction = response.text
             print(prediction)
+            print('_________________________________________________________________________________________')
 
             with open('devignresultsgpt4.csv', 'a', newline='') as f:
                 writer = csv.writer(f)
@@ -115,5 +136,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
+    

@@ -1,4 +1,3 @@
-import openai
 import pandas as pd
 from tqdm import tqdm
 import os
@@ -6,8 +5,16 @@ import json
 import csv
 import logging
 
-openai.api_base = ""
-openai.api_key = ""
+import textwrap
+import google.generativeai as genai
+from IPython.display import display
+from IPython.display import Markdown
+
+
+GOOGLE_API_KEY = 'AIzaSyBnOY7XCnDRm98cdnEj6inozsLLYPHiAkQ'
+genai.configure(api_key=GOOGLE_API_KEY)
+
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 templates = {
     1: 'In the above code snippet, check for potential security vulnerabilities and output either \'Vulnerable\' or \'Non-vulnerable\'. '
@@ -29,7 +36,7 @@ logger.addHandler(fh)
 
 
 def main():
-    with open('F:/pycharmfile/vulllm/devign_data/devign_test_processed.json', 'r') as f:
+    with open('C:/Users/khoiv/Downloads/function.json', 'r') as f:
         data = json.load(f)
 
     def calculate_metrics(predictions, ground_truth):
@@ -60,33 +67,49 @@ def main():
     for row in data[0:2000]:
         if 'func' in row:
             inputCode = row['func'][:4000]
-        if 'node' in row:
-            inputnode = row['node'][:2000]
-        if 'edge' in row:
-            inputedge = row['edge'][:2000]
-        if 'func' in row:
-            inputex = row['example'][:4000]
+        # if 'node' in row:
+        #     inputnode = row['node'][:2000]
+        # if 'edge' in row:
+        #     inputedge = row['edge'][:2000]
+        # if 'func' in row:
+        #     inputex = row['example'][:4000]
 
 
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "user", "content": format(inputCode)+templates[1]}
-                ]
-            )
-            prediction = response['choices'][0]['message']['content']
-            print(prediction)
+            # response = openai.ChatCompletion.create(
+            #     model="gpt-4",
+            #     messages=[
+            #         {"role": "user", "content": format(inputCode)+templates[1]}
+            #     ]
+            # )
+            # prediction = response['choices'][0]['message']['content']
+            # print(prediction)
+            
+            response = model.generate_content(format(inputCode)+templates[1])
+            prediction = 2
+            if response._result and response._result.candidates[0].content.parts:
+                prediction_text = response._result.candidates[0].content.parts[0].text.strip()
+                # print(prediction_text)
+                if "vulnerable" in prediction_text.lower():
+                    prediction = 1
+                if "non-vulnerable" in prediction_text.lower():
+                    prediction = 0
+            else:
+                prediction = 2
+            # print('_____________________________________________________________________________________')
+            # print(prediction)
+            # print('_____________________________________________________________________________________')
+            
 
             with open('devignresultsgpt4.csv', 'a', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(['result'])
-                writer.writerow(prediction)
+                writer.writerow(str(prediction))
                 f.close()
 
-            if prediction == "0" or prediction == "1":
-                prediction = int(prediction)
-            else:
-                prediction = 2
+        #     if prediction == "0" or prediction == "1":
+        #         prediction = int(prediction)
+        #     else:
+        #         prediction = 2
 
             prediction_ls.append(prediction)
             ground_truth.append(row['target'])
@@ -99,8 +122,8 @@ def main():
             writer.writerow(['Prediction', 'Groundtruth'])
             writer.writerows(zip(prediction_ls, ground_truth))
 
-        print(prediction_ls)
-        print(ground_truth)
+        print(prediction)
+        print(row['target'])
 
         accuracy, precision, recall, f1 = calculate_metrics(prediction_ls, ground_truth)
         print("Accuracy:", accuracy)
@@ -115,5 +138,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
