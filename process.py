@@ -19,6 +19,9 @@ file_path = 'C:/Users/khoiv/Downloads/MSR_data_cleaned.csv'
 #         print("Cột 'vul' không chứa giá trị '1'.")
 # else:
 #     print("Không tìm thấy cột 'vul' trong file CSV.")
+
+
+
 with open('C:/Users/khoiv/Downloads/MSR_data_cleaned.csv', newline='', encoding='utf-8') as csvfile:
     reader = csv.DictReader(csvfile)
     for i, row in enumerate(reader):
